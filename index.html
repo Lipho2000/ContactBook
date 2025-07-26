@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Contact Book</title>
+</head>
+<body onload="fetchContacts()">
+
+  <div id="table">Contacts loading...</div>
+  <button id="refresh" type="button">Refresh</button>
+  <button id="addContact" type="button">Add Contact</button>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById("refresh").addEventListener("click", fetchContacts);
+    document.getElementById("addContact").addEventListener("click", addContact);
+
+    function fetchContacts() {
+      fetch(rootPath + "controller/get-contacts/")
+        .then(response => response.json())
+        .then(data => displayOutput(data));
+    }
+
+    function displayOutput(data) {
+      let output = "<table border='1' cellpadding='5'>";
+      data.forEach(contact => {
+        output += `
+            <tr onclick="editContact('${contact.contact_id}')">
+            <td><img src="${rootPath}controller/uploads/${contact.avatar}" width="50" /></td>
+            <td>${contact.firstname} ${contact.lastname}</td>
+            <td>${contact.cellphone}</td>
+            <td>
+              <button type="button" onclick="event.stopPropagation(); deleteContact('${contact.contact_id}')">Delete</button>
+            </td>
+            </tr>
+        `;
+      });
+      output += "</table>";
+      document.getElementById("table").innerHTML = output;
+    }
+
+    function addContact() {
+      window.open('add-contact.html', '_self');
+    }
+
+    function saveContact(firstname, lastname, cellphone) {
+      fetch(rootPath + "controller/add-contact/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstname, lastname, cellphone
+        })
+      })
+      .then(response => response.json())
+      .then(result => {
+        alert("Contact added!");
+        fetchContacts();
+      })
+      .catch(err => alert("Error adding contact"));
+    }
+
+    function deleteContact(contact_id) {
+      if (confirm("Are you sure you want to delete this contact?")) {
+        fetch(rootPath + "controller/delete-contact/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contact_id })
+        })
+        .then(response => response.json())
+        .then(result => {
+          alert("Contact deleted!");
+          fetchContacts();
+        })
+        .catch(err => alert("Error deleting contact"))
+
+      }
+      function editContact(id) {
+        window.open('edit-contact.html?id=' + id, '_self');
+      }
+    }
+  </script>
+</body>
+</html>
